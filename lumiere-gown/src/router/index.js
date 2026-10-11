@@ -6,6 +6,7 @@ import MenView from '@/views/MenView.vue'
 import NewView from '@/views/NewView.vue'
 import BoysView from '@/views/BoysView.vue'
 import AccountView from '@/views/AccountView.vue'
+import ProductDetailView from '@/views/ProductDetailView.vue'
 
 const routes = [
   {
@@ -38,6 +39,11 @@ const routes = [
     name: 'account', 
     component: AccountView 
   },
+  { path: '/product/:id', 
+    name: 'product-detail', 
+    component: ProductDetailView 
+  },
+
 ]
 
 const router = createRouter({
