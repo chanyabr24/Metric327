@@ -9,6 +9,7 @@ import AccountView from '@/views/AccountView.vue'
 import ContactView from '@/views/ContactView.vue'
 import CartView from '@/views/CartView.vue'
 import CheckoutView from '../views/CheckoutView.vue'
+import ProductDetailView from '@/views/ProductDetailView.vue'
 
 
 const routes = [
@@ -53,6 +54,10 @@ const routes = [
   { path: '/checkout', 
     name: 'checkout', 
     component: CheckoutView 
+  },
+  { path: '/product/:id', 
+    name: 'product-detail', 
+    component: ProductDetailView 
   },
 ]
 
