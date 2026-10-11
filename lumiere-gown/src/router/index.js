@@ -7,6 +7,7 @@ import NewView from '@/views/NewView.vue'
 import BoysView from '@/views/BoysView.vue'
 import AccountView from '@/views/AccountView.vue'
 import ContactView from '@/views/ContactView.vue'
+import CartView from '@/views/CartView.vue'
 
 const routes = [
   {
@@ -43,7 +44,10 @@ const routes = [
     name: 'contact', 
     component: ContactView 
   },
-
+  { path: '/cart', 
+    name: 'cart', 
+    component: CartView 
+  },
 ]
 
 const router = createRouter({
