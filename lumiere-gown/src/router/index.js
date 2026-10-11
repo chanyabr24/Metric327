@@ -10,7 +10,7 @@ import ContactView from '@/views/ContactView.vue'
 import CartView from '@/views/CartView.vue'
 import CheckoutView from '../views/CheckoutView.vue'
 import ProductDetailView from '@/views/ProductDetailView.vue'
-
+import OrderCompleteView from '@/views/OrderCompleteView.vue'
 
 const routes = [
   {
@@ -58,6 +58,10 @@ const routes = [
   { path: '/product/:id', 
     name: 'product-detail', 
     component: ProductDetailView 
+  },
+  { path: '/order-complete', 
+    name: 'order-complete', 
+    component: OrderCompleteView 
   },
 ]
 
