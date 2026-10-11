@@ -3,6 +3,8 @@ import HomeView from '@/views/HomeView.vue'
 import GirlsView from '@/views/GirlsView.vue'
 import WomenView from '@/views/WomenView.vue'
 import MenView from '@/views/MenView.vue'
+import NewView from '@/views/NewView.vue'
+
 
 
 const routes = [
@@ -22,6 +24,11 @@ const routes = [
   { path: '/men',
     name: 'men', 
     component: MenView 
+  },
+  {
+    path: '/new',
+    name: 'new',
+    component: NewView
   },
 ]
 
