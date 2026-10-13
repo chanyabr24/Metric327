@@ -91,3 +91,34 @@ class UserResponse(UserBase):
 
     class Config:
         from_attributes = True
+
+# ==========================================
+# ADMIN SCHEMAS
+# ==========================================
+
+# Base properties for Admin
+class AdminBase(BaseModel):
+    full_name: str
+    email_address: str
+    phone_number: Optional[str] = None
+    employee_id: Optional[str] = None
+
+# Properties required to create a new Admin
+class AdminCreate(AdminBase):
+    password: str
+
+# Properties for updating an Admin (all fields are optional)
+class AdminUpdate(BaseModel):
+    full_name: Optional[str] = None
+    email_address: Optional[str] = None
+    password: Optional[str] = None
+    phone_number: Optional[str] = None
+    employee_id: Optional[str] = None
+
+# Properties to return to the client (excludes password for security)
+class AdminResponse(AdminBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

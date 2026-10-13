@@ -179,3 +179,61 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     db.delete(db_user)
     db.commit()
     return {"message": f"User ID {user_id} has been deleted"}
+
+# ==========================================
+# ADMINS API
+# ==========================================
+
+# 1. Get all admins
+@app.get("/admins/", response_model=list[schemas.AdminResponse])
+def get_admins(db: Session = Depends(get_db)):
+    admins = db.query(models.Admin).all()
+    return admins
+
+# 2. Get a specific admin by ID
+@app.get("/admins/{admin_id}", response_model=schemas.AdminResponse)
+def get_admin(admin_id: int, db: Session = Depends(get_db)):
+    admin = db.query(models.Admin).filter(models.Admin.id == admin_id).first()
+    if not admin:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    return admin
+
+# 3. Create a new admin
+@app.post("/admins/", response_model=schemas.AdminResponse)
+def create_admin(admin: schemas.AdminCreate, db: Session = Depends(get_db)):
+    # Check if email already exists
+    existing_admin = db.query(models.Admin).filter(models.Admin.email_address == admin.email_address).first()
+    if existing_admin:
+        raise HTTPException(status_code=400, detail="Email already registered")
+        
+    new_admin = models.Admin(**admin.model_dump())
+    db.add(new_admin)
+    db.commit()
+    db.refresh(new_admin)
+    return new_admin
+
+# 4. Update admin information
+@app.put("/admins/{admin_id}", response_model=schemas.AdminResponse)
+def update_admin(admin_id: int, admin_data: schemas.AdminUpdate, db: Session = Depends(get_db)):
+    db_admin = db.query(models.Admin).filter(models.Admin.id == admin_id).first()
+    if not db_admin:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    
+    update_data = admin_data.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_admin, key, value)
+        
+    db.commit()
+    db.refresh(db_admin)
+    return db_admin
+
+# 5. Delete an admin
+@app.delete("/admins/{admin_id}")
+def delete_admin(admin_id: int, db: Session = Depends(get_db)):
+    db_admin = db.query(models.Admin).filter(models.Admin.id == admin_id).first()
+    if not db_admin:
+        raise HTTPException(status_code=404, detail="Admin not found")
+        
+    db.delete(db_admin)
+    db.commit()
+    return {"message": f"Admin ID {admin_id} has been deleted"}
