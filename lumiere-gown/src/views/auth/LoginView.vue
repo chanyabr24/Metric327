@@ -128,6 +128,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 const router = useRouter()
 const isSubmitting = ref(false)
@@ -144,34 +145,27 @@ const handleLogin = async () => {
   errorMessage.value = ''
   successMessage.value = ''
 
-  const emailLower = form.value.email_address.toLowerCase()
-
   try {
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form.value)
+    // โยนอีเมลและรหัสผ่านไปให้ Backend จัดการเช็กให้
+    const res = await axios.post('http://127.0.0.1:8000/login/', {
+      email_address: form.value.email_address,
+      password: form.value.password
     })
-
-    if (res.ok) {
-      const data = await res.json()
-      if (data.is_admin) {
-        router.push('/admin/products')
-      } else {
-        router.push('/account')
-      }
+    
+    // Backend จะตอบกลับมาว่าเป็นใคร
+    if (res.data.role === 'admin') {
+      localStorage.setItem('loggedInAdminId', res.data.id)
+      router.push('/admin/account')
     } else {
-      if (emailLower.includes('admin')) {
-        router.push('/admin/products')
-      } else {
-        router.push('/account')
-      }
-    }
-  } catch (err) {
-    if (emailLower.includes('admin')) {
-      router.push('/admin/products')
-    } else {
+      localStorage.setItem('loggedInUserId', res.data.id)
       router.push('/account')
+    }
+    
+  } catch (err) {
+    if (err.response && err.response.data && err.response.data.detail) {
+      errorMessage.value = err.response.data.detail
+    } else {
+      errorMessage.value = 'Cannot connect to server.'
     }
   } finally {
     isSubmitting.value = false

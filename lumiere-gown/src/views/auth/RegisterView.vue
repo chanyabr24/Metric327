@@ -159,6 +159,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 const router = useRouter()
 const isSubmitting = ref(false)
@@ -182,21 +183,22 @@ const handleRegister = async () => {
   errorMessage.value = ''
 
   try {
-    const res = await fetch('/api/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form.value)
-    })
-
-    if (res.ok) {
-      router.push('/login')
-    } else {
-      const err = await res.json().catch(() => ({}))
-      errorMessage.value = err.detail || 'Registration failed. Please try again.'
+    const userData = {
+      first_name: form.value.first_name,
+      last_name: form.value.last_name,
+      email_address: form.value.email_address,
+      password: form.value.password,
     }
-  } catch (err) {
-    // Fallback สำหรับกรณีทดสอบฝั่ง Frontend
+
+    await axios.post('http://127.0.0.1:8000/users/', userData)
     router.push('/login')
+    
+  } catch (error) {
+    if (error.response && error.response.data && error.response.data.detail) {
+      errorMessage.value = error.response.data.detail
+    } else {
+      errorMessage.value = 'An error occurred during registration. Please try again.'
+    }
   } finally {
     isSubmitting.value = false
   }
