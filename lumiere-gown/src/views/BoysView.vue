@@ -116,32 +116,44 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import Drawer from '../components/Drawer.vue'
+import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
+import Drawer from '../components/Drawer.vue' // (หรือ Drawer.vue ตามที่แต่ละไฟล์เรียกใช้)
 
 const isDrawerOpen = ref(false)
 const searchQuery = ref('')
 const categories = ['NEW', 'WOMEN', 'MEN', 'GIRLS', 'BOYS']
 
-// Smooth Scroll
-const scrollToProducts = () => {
-  const el = document.getElementById('products')
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth' })
+const currentCategoryName = 'BOYS' 
+
+const products = ref([])
+
+onMounted(async () => {
+  try {
+    // 1. ดึงข้อมูล Category เพื่อหา ID ของหมวดหมู่นี้
+    const catRes = await axios.get('http://127.0.0.1:8000/categories/')
+    const catObj = catRes.data.find(c => c.name.toUpperCase() === currentCategoryName)
+    
+    // 2. ดึงสินค้าทั้งหมด
+    const prodRes = await axios.get('http://127.0.0.1:8000/products/')
+    
+    // 3. กรองเอาเฉพาะสินค้าที่ตรงกับ Category ID
+    if (catObj) {
+      products.value = prodRes.data.filter(p => p.category_id === catObj.id)
+    }
+  } catch (err) {
+    console.error("Error fetching products:", err)
   }
-}
+})
 
-// Mock Products Data 
-const products = ref([
-  { id: 5, name: 'Boys Classic Suit', price: 5800, image_url: '/images/boyspage.jpg', category_name: 'BOYS' },
-  { id: 13, name: 'Junior Navy Tuxedo Set', price: 6200, image_url: '/images/boyspage.jpg', category_name: 'BOYS' },
-  { id: 14, name: 'Royal Velvet Blazer', price: 4900, image_url: '/images/boyspage.jpg', category_name: 'BOYS' }
-])
-
-// Reactive Filter
 const filteredProducts = computed(() => {
   if (!searchQuery.value.trim()) return products.value
   const query = searchQuery.value.toLowerCase()
-  return products.value.filter(p => p.name.toLowerCase().includes(query))
+  return products.value.filter(p => (p.name || '').toLowerCase().includes(query))
 })
+
+const scrollToProducts = () => {
+  const el = document.getElementById('products')
+  if (el) el.scrollIntoView({ behavior: 'smooth' })
+}
 </script>
