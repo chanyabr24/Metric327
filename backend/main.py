@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import engine, get_db
+from pydantic import BaseModel
 import models
 import schemas
 
@@ -8,6 +10,14 @@ import schemas
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"], 
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def read_root():
@@ -290,3 +300,23 @@ def delete_sale(sale_id: int, db: Session = Depends(get_db)):
     db.delete(db_sale)
     db.commit()
     return {"message": f"Sale ID {sale_id} has been deleted"}
+
+
+class LoginRequest(BaseModel):
+    email_address: str
+    password: str
+
+@app.post("/login/")
+def login(req: LoginRequest, db: Session = Depends(get_db)):
+    # 1. เช็กว่าเป็น Admin ไหม
+    admin = db.query(models.Admin).filter(models.Admin.email_address == req.email_address, models.Admin.password == req.password).first()
+    if admin:
+        return {"role": "admin", "id": admin.id}
+    
+    # 2. เช็กว่าเป็น User ปกติไหม
+    user = db.query(models.User).filter(models.User.email_address == req.email_address, models.User.password == req.password).first()
+    if user:
+        return {"role": "user", "id": user.id}
+    
+    # 3. ถ้าไม่เจอทั้งคู่
+    raise HTTPException(status_code=400, detail="Invalid email address or password")
