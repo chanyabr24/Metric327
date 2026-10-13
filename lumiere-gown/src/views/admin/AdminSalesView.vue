@@ -303,6 +303,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios' // 1. นำเข้า axios
 
 const router = useRouter()
 const isMobileMenuOpen = ref(false)
@@ -325,39 +326,33 @@ onMounted(() => {
   fetchSales()
 })
 
-// Fetch Sales Data
+// 2. ดึงข้อมูล Sales จาก Database
 const fetchSales = async () => {
   isLoading.value = true
   try {
-    const res = await fetch('/api/sales')
-    if (res.ok) {
-      sales.value = await res.json()
-    }
+    const res = await axios.get('http://127.0.0.1:8000/sales/')
+    sales.value = res.data
   } catch (err) {
-    // Fallback Mock Sales Data
-    sales.value = [
-      { id: 1, transaction_id: 'TXN-9082', customer_name: 'Sophia Bennett', customer_type: 'VIP Member', amount: 24900, status: 'COMPLETED', created_at: new Date().toISOString() },
-      { id: 2, transaction_id: 'TXN-9083', customer_name: 'Alexander Wright', customer_type: 'Guest', amount: 18900, status: 'PROCESSING', created_at: new Date().toISOString() },
-      { id: 3, transaction_id: 'TXN-9084', customer_name: 'Emma Watson', customer_type: 'Member', amount: 12500, status: 'CANCELLED', created_at: new Date().toISOString() }
-    ]
+    console.error("Error fetching sales:", err)
+    // เอา Mock Data ออก เพื่อให้รู้ตัวถ้าเชื่อมต่อ Database ไม่สำเร็จ
   } finally {
     isLoading.value = false
   }
 }
 
-// Calculate Total Revenue
+// คำนวณรายได้รวม
 const totalRevenue = computed(() => {
   return sales.value.reduce((sum, item) => sum + Number(item.amount || 0), 0)
 })
 
-// Date Formatter
+// ฟอร์แมตวันที่
 const formatDate = (dateStr) => {
   if (!dateStr) return 'N/A'
   const date = new Date(dateStr)
   return `${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
 }
 
-// Status Badge Styling
+// สีของสถานะ (Badge)
 const getStatusBadgeClass = (status) => {
   switch (status) {
     case 'COMPLETED':
@@ -371,7 +366,7 @@ const getStatusBadgeClass = (status) => {
   }
 }
 
-// Open Modal (Add or Edit)
+// เปิดหน้าต่าง Modal (สร้างใหม่ / แก้ไข)
 const openModal = (sale = null) => {
   if (sale) {
     form.value = {
@@ -395,56 +390,53 @@ const openModal = (sale = null) => {
   isModalOpen.value = true
 }
 
-// Save Sale (POST / PUT)
+// 3. บันทึกข้อมูล Sale (POST สร้างใหม่ / PUT แก้ไข)
 const handleSaveSale = async () => {
   isSubmitting.value = true
-  const method = form.value.id ? 'PUT' : 'POST'
-  const url = form.value.id ? `/api/sales/${form.value.id}` : '/api/sales'
+  
+  const payload = {
+    transaction_id: form.value.transaction_id,
+    customer_name: form.value.customer_name,
+    customer_type: form.value.customer_type,
+    amount: form.value.amount,
+    status: form.value.status
+  }
 
   try {
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form.value)
-    })
-
-    if (res.ok) {
-      isModalOpen.value = false
-      fetchSales()
-    } else {
-      alert('Error saving sale record')
-    }
-  } catch (err) {
-    // Fallback Local Update
     if (form.value.id) {
-      const idx = sales.value.findIndex(s => s.id === form.value.id)
-      if (idx !== -1) sales.value[idx] = { ...form.value, created_at: sales.value[idx].created_at }
+      // โหมดแก้ไข
+      await axios.put(`http://127.0.0.1:8000/sales/${form.value.id}`, payload)
     } else {
-      sales.value.unshift({ ...form.value, id: Date.now(), created_at: new Date().toISOString() })
+      // โหมดสร้างใหม่
+      await axios.post('http://127.0.0.1:8000/sales/', payload)
     }
+
     isModalOpen.value = false
+    fetchSales() // สั่งให้ดึงข้อมูลใหม่มาแสดงทันที
+  } catch (err) {
+    console.error(err)
+    alert('Error saving sale record')
   } finally {
     isSubmitting.value = false
   }
 }
 
-// Delete Sale
+// 4. ลบข้อมูล Sale (DELETE)
 const deleteSale = async (id) => {
   if (!confirm('Are you sure you want to delete this sale record?')) return
 
   try {
-    const res = await fetch(`/api/sales/${id}`, { method: 'DELETE' })
-    if (res.ok) {
-      sales.value = sales.value.filter(s => s.id !== id)
-    } else {
-      alert('Error deleting sale record')
-    }
-  } catch (err) {
+    await axios.delete(`http://127.0.0.1:8000/sales/${id}`)
     sales.value = sales.value.filter(s => s.id !== id)
+  } catch (err) {
+    console.error(err)
+    alert('Error deleting sale record')
   }
 }
 
+// ออกจากระบบ
 const handleLogout = () => {
+  localStorage.removeItem('loggedInAdminId')
   router.push('/login')
 }
 </script>

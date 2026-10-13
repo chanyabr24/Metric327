@@ -293,6 +293,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import axios from 'axios' // นำเข้า axios
 
 const route = useRoute()
 const router = useRouter()
@@ -329,69 +330,51 @@ const form = ref({
 onMounted(async () => {
   await fetchCategories()
 
+  // ถ้ามี ID แปลว่ากดแก้ไขมา ให้ดึงข้อมูลสินค้าชิ้นนั้นมาโชว์
   if (route.query.id) {
     productId.value = route.query.id
     await fetchProductData(productId.value)
   }
 })
 
-// Fetch Category Options
+// 1. ดึงหมวดหมู่ทั้งหมดมาแสดงใน Dropdown
 const fetchCategories = async () => {
   try {
-    const res = await fetch('/api/categories')
-    if (res.ok) {
-      categories.value = await res.json()
-    }
+    const res = await axios.get('http://127.0.0.1:8000/categories/')
+    categories.value = res.data
   } catch (err) {
-    categories.value = [
-      { id: 1, name: 'WOMEN' },
-      { id: 2, name: 'MEN' },
-      { id: 3, name: 'GIRLS' },
-      { id: 4, name: 'BOYS' }
-    ]
+    console.error("Error fetching categories:", err)
+    alert("Failed to load categories")
   }
 }
 
-// Fetch Product Details for Edit Mode
+// 2. ดึงข้อมูลสินค้าเดิมมาแสดงในฟอร์ม (สำหรับโหมด Edit)
 const fetchProductData = async (id) => {
   try {
-    const res = await fetch('/api/products')
-    if (res.ok) {
-      const products = await res.json()
-      const product = products.find(p => p.id == id)
-      if (product) {
-        form.value = {
-          name: product.name || '',
-          description: product.description || '',
-          price: product.price || '',
-          category_id: product.category_id || '',
-          image_url: product.image_url || ''
-        }
+    const res = await axios.get(`http://127.0.0.1:8000/products/${id}`)
+    const product = res.data
+    
+    form.value = {
+      name: product.name || '',
+      description: product.description || '',
+      price: product.price || '',
+      category_id: product.category_id || '',
+      image_url: product.image_url || ''
+    }
 
-        let attrObj = {}
-        if (product.attribute) {
-          try {
-            attrObj = typeof product.attribute === 'string' ? JSON.parse(product.attribute) : product.attribute
-          } catch (e) {}
-        }
-
+    // แปลง Attributes (สี/ไซส์) จาก Database กลับมาติ๊กใน Checkbox
+    if (product.attribute) {
+      try {
+        const attrObj = typeof product.attribute === 'string' ? JSON.parse(product.attribute) : product.attribute
         if (attrObj.colors) selectedColors.value = attrObj.colors
         if (attrObj.sizes) selectedSizes.value = attrObj.sizes
+      } catch (e) {
+        console.error("Attribute parsing error", e)
       }
     }
   } catch (err) {
-    // Fallback Mock Data
-    if (id == '1') {
-      form.value = {
-        name: 'Silky Silk Evening Gown',
-        description: 'Crafted from 100% Mulberry silk.',
-        price: 12500,
-        category_id: 1,
-        image_url: '/images/women.jpg'
-      }
-      selectedColors.value = ['white', 'pearl-white']
-      selectedSizes.value = ['s', 'm', 'l']
-    }
+    console.error("Error fetching product details:", err)
+    alert("Failed to load product details")
   }
 }
 
@@ -399,50 +382,46 @@ const handleImageError = (e) => {
   e.target.style.display = 'none'
 }
 
-// Submit Handler (POST / PUT)
+// 3. บันทึกข้อมูล (POST สร้างใหม่ / PUT แก้ไข)
 const handleSubmit = async () => {
   isSubmitting.value = true
 
-  const finalAttribute = JSON.stringify({
+  // 📍 1. สร้างเป็น Object ตรงๆ (ลบ JSON.stringify ออก)
+  const finalAttribute = {
     colors: selectedColors.value,
     sizes: selectedSizes.value
-  })
+  }
 
+  // 📍 2. รวมข้อมูลเพื่อเตรียมส่ง
   const payload = {
     name: form.value.name,
     description: form.value.description,
-    price: form.value.price,
-    category_id: form.value.category_id,
-    attribute: finalAttribute,
+    price: Number(form.value.price), 
+    category_id: Number(form.value.category_id), 
+    attribute: finalAttribute, // ส่งแบบ Object
     image_url: form.value.image_url
   }
 
-  const method = productId.value ? 'PUT' : 'POST'
-  const endpoint = productId.value ? `/api/products/${productId.value}` : '/api/products'
-
   try {
-    const res = await fetch(endpoint, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-
-    if (res.ok) {
-      alert('Product saved successfully!')
-      router.push('/admin/products')
+    if (productId.value) {
+      await axios.put(`http://127.0.0.1:8000/products/${productId.value}`, payload)
     } else {
-      const data = await res.json().catch(() => ({}))
-      alert('Error saving product: ' + (data.error || 'Please try again.'))
+      await axios.post('http://127.0.0.1:8000/products/', payload)
     }
-  } catch (err) {
+
     alert('Product saved successfully!')
-    router.push('/admin/products')
+    router.push('/admin/products') 
+
+  } catch (err) {
+    console.error("Error saving product:", err)
+    alert('บันทึกไม่สำเร็จ ตรวจสอบข้อมูลอีกครั้ง (422)')
   } finally {
     isSubmitting.value = false
   }
 }
 
 const handleLogout = () => {
+  localStorage.removeItem('loggedInAdminId')
   router.push('/login')
 }
 </script>

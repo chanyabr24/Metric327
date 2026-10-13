@@ -196,6 +196,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios' // 1. นำเข้า axios
 
 const router = useRouter()
 const isMobileMenuOpen = ref(false)
@@ -211,95 +212,70 @@ onMounted(async () => {
   await fetchProducts()
 })
 
-// Load Categories for Filter Options
+// 2. ดึงข้อมูลหมวดหมู่ทั้งหมด เพื่อเอามาทำ Dropdown และเอาไว้เทียบชื่อ
 const loadCategories = async () => {
   try {
-    const res = await fetch('/api/categories')
-    if (res.ok) {
-      categories.value = await res.json()
-    }
+    const res = await axios.get('http://127.0.0.1:8000/categories/')
+    categories.value = res.data
   } catch (err) {
-    categories.value = [
-      { id: 1, name: 'WOMEN' },
-      { id: 2, name: 'MEN' },
-      { id: 3, name: 'GIRLS' },
-      { id: 4, name: 'BOYS' }
-    ]
+    console.error("Error loading categories:", err)
   }
 }
 
-// Fetch Products from Backend API
+// 3. ดึงข้อมูลสินค้าทั้งหมดจาก Database
 const fetchProducts = async () => {
   isLoading.value = true
   errorMessage.value = ''
 
-  const catId = selectedCategory.value
-  const url = catId 
-    ? `/api/products?admin=true&category_id=${catId}` 
-    : '/api/products?admin=true'
-
   try {
-    const res = await fetch(url)
-    if (res.ok) {
-      products.value = await res.json()
-    } else {
-      errorMessage.value = 'Failed to load products.'
-    }
-  } catch (err) {
-    // Fallback Mock Products กรณีทดสอบฝั่ง Frontend
-    products.value = [
-      { 
-        id: 1, 
-        name: 'Silky Silk Evening Gown', 
-        price: 12500, 
-        category_name: 'WOMEN', 
-        description: 'Crafted from 100% Mulberry silk. Cowl neckline.', 
-        image_url: '/images/women.jpg' 
-      },
-      { 
-        id: 2, 
-        name: 'Elegance Lace Bridal Dress', 
-        price: 24900, 
-        category_name: 'NEW', 
-        description: 'Intricate French lace detailing. Sweetheart neckline.', 
-        image_url: '/images/newpage.jpg' 
-      },
-      { 
-        id: 3, 
-        name: 'Velvet Midnight Suit', 
-        price: 18900, 
-        category_name: 'MEN', 
-        description: 'Premium cotton-velvet fabric. Tailored slim fit.', 
-        image_url: '/images/men.jpg' 
+    const res = await axios.get('http://127.0.0.1:8000/products/')
+    let allProducts = res.data
+
+    // แมปชื่อ Category ใส่ให้สินค้าแต่ละชิ้น เพื่อเอาไปโชว์บนป้าย Badge
+    allProducts = allProducts.map(p => {
+      const cat = categories.value.find(c => c.id === p.category_id)
+      return {
+        ...p,
+        category_name: cat ? cat.name : 'Uncategorized'
       }
-    ]
+    })
+
+    // ระบบ Filter: ถ้าแอดมินเลือก Dropdown หมวดหมู่ ให้กรองมาโชว์เฉพาะหมวดนั้น
+    if (selectedCategory.value) {
+      products.value = allProducts.filter(p => p.category_id === selectedCategory.value)
+    } else {
+      products.value = allProducts
+    }
+
+  } catch (err) {
+    console.error("Error fetching products:", err)
+    errorMessage.value = 'Failed to load products. Please check connection.'
   } finally {
     isLoading.value = false
   }
 }
 
-// Sort products DESC (Z to A) by name
+// เรียงลำดับสินค้าตามตัวอักษร
 const sortedProducts = computed(() => {
   return [...products.value].sort((a, b) => (b.name || '').localeCompare(a.name || ''))
 })
 
-// Delete Product Handler
+// 4. ระบบลบสินค้า
 const deleteProduct = async (id) => {
   if (!confirm('Are you sure you want to delete this product?')) return
 
   try {
-    const res = await fetch(`/api/products/${id}`, { method: 'DELETE' })
-    if (res.ok) {
-      products.value = products.value.filter(p => p.id !== id)
-    } else {
-      alert('Error deleting product')
-    }
-  } catch (err) {
+    await axios.delete(`http://127.0.0.1:8000/products/${id}`)
+    // พอลบใน Database สำเร็จ ให้ลบออกจากหน้าจอทันทีโดยไม่ต้องรีเฟรช
     products.value = products.value.filter(p => p.id !== id)
+  } catch (err) {
+    console.error("Error deleting product:", err)
+    alert('Error deleting product')
   }
 }
 
 const handleLogout = () => {
+  localStorage.removeItem('loggedInAdminId')
   router.push('/login')
 }
 </script>

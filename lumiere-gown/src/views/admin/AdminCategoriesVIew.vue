@@ -192,6 +192,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios' // อย่าลืม import axios
 
 const router = useRouter()
 const isMobileMenuOpen = ref(false)
@@ -199,25 +200,16 @@ const isLoading = ref(true)
 const errorMessage = ref('')
 const categories = ref([])
 
-// Fetch Categories
+// 1. ฟังก์ชันดึงหมวดหมู่ทั้งหมดจาก Database
 const fetchCategories = async () => {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const res = await fetch('/api/categories')
-    if (res.ok) {
-      categories.value = await res.json()
-    } else {
-      errorMessage.value = 'Failed to load categories.'
-    }
+    const res = await axios.get('http://127.0.0.1:8000/categories/')
+    categories.value = res.data
   } catch (err) {
-    // Mock Data สำหรับการทดสอบฝั่ง Frontend
-    categories.value = [
-      { id: 1, name: 'WOMEN', description: 'Womens gown collection', status: 'SHOW', image_url: '/images/women.jpg' },
-      { id: 2, name: 'MEN', description: 'Mens suits and formalwear', status: 'SHOW', image_url: '/images/men.jpg' },
-      { id: 3, name: 'GIRLS', description: 'Girls collection and dresses', status: 'SHOW', image_url: '/images/girls.JPG' },
-      { id: 4, name: 'BOYS', description: 'Boys formal collection', status: 'SHOW', image_url: '/images/boys.JPG' }
-    ]
+    console.error(err)
+    errorMessage.value = 'Failed to load categories.'
   } finally {
     isLoading.value = false
   }
@@ -227,59 +219,43 @@ onMounted(() => {
   fetchCategories()
 })
 
-// Sort categories alphabetically ASC
 const sortedCategories = computed(() => {
   return [...categories.value].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
 })
 
-// Toggle Status (SHOW/HIDE)
+// 2. ฟังก์ชันเปิด/ปิดการมองเห็น (อัปเดตข้อมูล)
 const toggleCategoryStatus = async (category) => {
   const newStatus = category.status === 'SHOW' ? 'HIDE' : 'SHOW'
   if (!confirm(`Are you sure you want to set this category to ${newStatus}?`)) return
 
   try {
-    const res = await fetch(`/api/categories/${category.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: category.name,
-        description: category.description,
-        status: newStatus,
-        image_url: category.image_url
-      })
+    await axios.put(`http://127.0.0.1:8000/categories/${category.id}`, {
+      name: category.name,
+      description: category.description,
+      status: newStatus,
+      image_url: category.image_url
     })
-
-    if (res.ok) {
-      category.status = newStatus
-    } else {
-      alert('Error updating category status')
-    }
-  } catch (err) {
-    // Fallback UI Toggle
     category.status = newStatus
+  } catch (err) {
+    alert('Error updating category status')
   }
 }
 
-// Delete Category
+// 3. ฟังก์ชันลบหมวดหมู่
 const deleteCategory = async (id) => {
   if (!confirm('Are you sure you want to delete this category?')) return
 
   try {
-    const res = await fetch(`/api/categories/${id}`, {
-      method: 'DELETE'
-    })
-
-    if (res.ok) {
-      categories.value = categories.value.filter(c => c.id !== id)
-    } else {
-      alert('Error deleting category')
-    }
-  } catch (err) {
+    await axios.delete(`http://127.0.0.1:8000/categories/${id}`)
+    // พอลบสำเร็จ ก็สั่งให้หน้าเว็บลบแถวนั้นทิ้งไปเลย
     categories.value = categories.value.filter(c => c.id !== id)
+  } catch (err) {
+    alert('Error deleting category')
   }
 }
 
 const handleLogout = () => {
+  localStorage.removeItem('loggedInAdminId')
   router.push('/login')
 }
 </script>

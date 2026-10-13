@@ -222,6 +222,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
@@ -238,78 +239,63 @@ const form = ref({
 })
 
 onMounted(async () => {
-  // ดึง Query Parameter ?id=... (ถ้าเป็นการ Edit)
+  // ถ้าเป็นการเข้ามาแบบมี ID (เช่น กดปุ่ม Edit มา) ให้ดึงข้อมูลเก่ามาโชว์ก่อน
   if (route.query.id) {
     categoryId.value = route.query.id
     await fetchCategoryData(categoryId.value)
   }
 })
 
-// Fetch Category Data for Editing
+// ฟังก์ชันดึงข้อมูลหมวดหมู่เดียว (สำหรับตอนแก้ไข)
 const fetchCategoryData = async (id) => {
   try {
-    const res = await fetch('/api/categories')
-    if (res.ok) {
-      const categories = await res.json()
-      const category = categories.find(c => c.id == id)
-      if (category) {
-        form.value = {
-          name: category.name || '',
-          description: category.description || '',
-          status: category.status || 'SHOW',
-          image_url: category.image_url || ''
-        }
-      }
+    const res = await axios.get(`http://127.0.0.1:8000/categories/${id}`)
+    const category = res.data
+    form.value = {
+      name: category.name || '',
+      description: category.description || '',
+      status: category.status || 'SHOW',
+      image_url: category.image_url || ''
     }
   } catch (err) {
-    // Fallback Mock Data กรณีทดสอบ
-    if (id == '1') {
-      form.value = {
-        name: 'WOMEN',
-        description: 'Womens gown collection',
-        status: 'SHOW',
-        image_url: '/images/women.jpg'
-      }
-    }
+    alert('Cannot fetch category data')
   }
 }
 
-// Fallback Image Handler
 const handleImageError = (e) => {
   e.target.style.display = 'none'
 }
 
-// Submit Form (Create or Update)
+// ฟังก์ชันเวลากดปุ่ม SAVE (จัดการทั้งสร้างใหม่และแก้ไข)
 const handleSubmit = async () => {
   isSubmitting.value = true
 
-  const method = categoryId.value ? 'PUT' : 'POST'
-  const url = categoryId.value ? `/api/categories/${categoryId.value}` : '/api/categories'
-
   try {
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form.value)
-    })
-
-    if (res.ok) {
-      alert('Category successfully saved!')
-      router.push('/admin/categories')
+    if (categoryId.value) {
+      // โหมดแก้ไข (PUT)
+      await axios.put(`http://127.0.0.1:8000/categories/${categoryId.value}`, form.value)
     } else {
-      const err = await res.json().catch(() => ({}))
-      alert('Error saving category: ' + (err.error || 'Please try again.'))
+      // โหมดสร้างใหม่ (POST)
+      await axios.post('http://127.0.0.1:8000/categories/', form.value)
     }
-  } catch (err) {
-    // Fallback นำทางกลับหน้าหมวดหมู่สำหรับการทดสอบ
+
     alert('Category successfully saved!')
-    router.push('/admin/categories')
+    router.push('/admin/categories') // เซฟเสร็จให้เด้งกลับไปหน้าตาราง
+
+  } catch (err) {
+    if (err.response && err.response.data && err.response.data.detail) {
+      alert('Error: ' + err.response.data.detail)
+    } else {
+      alert('Error saving category. Please try again.')
+    }
+    console.error(err)
   } finally {
     isSubmitting.value = false
   }
 }
 
 const handleLogout = () => {
+  localStorage.removeItem('loggedInAdminId')
   router.push('/login')
 }
 </script>

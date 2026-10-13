@@ -189,31 +189,49 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 const router = useRouter()
 const isMobileMenuOpen = ref(false)
 
-// Mock Admin Data
+// เตรียมตัวแปรว่างไว้รอรับข้อมูลจริงจาก Database
 const admin = ref({
-  full_name: 'Administrator User',
-  email_address: 'admin@lumieregown.com',
-  phone_number: '+66 81-234-5678',
-  employee_id: 'EMP-2026-001'
+  full_name: '',
+  email_address: '',
+  phone_number: '',
+  employee_id: ''
 })
 
 onMounted(async () => {
   try {
-    const res = await fetch('/api/admin/profile')
-    if (res.ok) {
-      admin.value = await res.json()
+    // 1. ดึง ID แอดมินที่ล็อกอินไว้จาก localStorage
+    const adminId = localStorage.getItem('loggedInAdminId')
+    
+    // 2. ถ้าไม่มี ID แปลว่าแอบเข้าเว็บมา ให้เตะกลับไปหน้าล็อกอิน
+    if (!adminId) {
+      router.push('/login')
+      return
+    }
+
+    // 3. ยิง API ไปขอข้อมูลแอดมินคนนั้นๆ
+    const res = await axios.get(`http://127.0.0.1:8000/admins/${adminId}`)
+    const data = res.data
+    
+    // 4. เอาข้อมูลที่ได้มาใส่ตัวแปรโชว์บนเว็บ
+    admin.value = {
+      full_name: data.name || 'Admin',
+      email_address: data.email_address || 'N/A',
+      phone_number: data.phone_number || 'N/A',
+      employee_id: data.employee_id || 'N/A'
     }
   } catch (err) {
-    // ใช้ Mock Data กรณีที่ยังไม่ได้เชื่อม Backend
+    console.error("Failed to load admin profile:", err)
   }
 })
 
 const handleLogout = () => {
-  // Clear Admin Session/Token
+  // เคลียร์ ID ออกจากความจำเครื่อง แล้วเด้งไปหน้าล็อกอิน
+  localStorage.removeItem('loggedInAdminId')
   router.push('/login')
 }
 </script>
