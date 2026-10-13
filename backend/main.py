@@ -237,3 +237,56 @@ def delete_admin(admin_id: int, db: Session = Depends(get_db)):
     db.delete(db_admin)
     db.commit()
     return {"message": f"Admin ID {admin_id} has been deleted"}
+
+# ==========================================
+# SALES API
+# ==========================================
+
+# 1. Get all sales
+@app.get("/sales/", response_model=list[schemas.SaleResponse])
+def get_sales(db: Session = Depends(get_db)):
+    sales = db.query(models.Sale).all()
+    return sales
+
+# 2. Get a specific sale by ID
+@app.get("/sales/{sale_id}", response_model=schemas.SaleResponse)
+def get_sale(sale_id: int, db: Session = Depends(get_db)):
+    sale = db.query(models.Sale).filter(models.Sale.id == sale_id).first()
+    if not sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
+    return sale
+
+# 3. Create a new sale transaction
+@app.post("/sales/", response_model=schemas.SaleResponse)
+def create_sale(sale: schemas.SaleCreate, db: Session = Depends(get_db)):
+    new_sale = models.Sale(**sale.model_dump())
+    db.add(new_sale)
+    db.commit()
+    db.refresh(new_sale)
+    return new_sale
+
+# 4. Update sale information (e.g. updating order status)
+@app.put("/sales/{sale_id}", response_model=schemas.SaleResponse)
+def update_sale(sale_id: int, sale_data: schemas.SaleUpdate, db: Session = Depends(get_db)):
+    db_sale = db.query(models.Sale).filter(models.Sale.id == sale_id).first()
+    if not db_sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
+    
+    update_data = sale_data.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_sale, key, value)
+        
+    db.commit()
+    db.refresh(db_sale)
+    return db_sale
+
+# 5. Delete a sale record
+@app.delete("/sales/{sale_id}")
+def delete_sale(sale_id: int, db: Session = Depends(get_db)):
+    db_sale = db.query(models.Sale).filter(models.Sale.id == sale_id).first()
+    if not db_sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
+        
+    db.delete(db_sale)
+    db.commit()
+    return {"message": f"Sale ID {sale_id} has been deleted"}

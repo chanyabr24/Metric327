@@ -122,3 +122,37 @@ class AdminResponse(AdminBase):
 
     class Config:
         from_attributes = True
+
+# ==========================================
+# SALE SCHEMAS
+# ==========================================
+
+# Base properties for Sale
+class SaleBase(BaseModel):
+    transaction_id: str
+    customer_name: str
+    customer_type: Optional[str] = "REGULAR"  # REGULAR or VIP
+    amount: float
+    status: Optional[str] = "PROCESSING"      # COMPLETED, PENDING, CANCELLED, PROCESSING
+    user_id: Optional[int] = None             # Can be null if it's a guest checkout
+
+# Properties required to create a new Sale
+class SaleCreate(SaleBase):
+    pass
+
+# Properties for updating a Sale (e.g., changing status to COMPLETED)
+class SaleUpdate(BaseModel):
+    transaction_id: Optional[str] = None
+    customer_name: Optional[str] = None
+    customer_type: Optional[str] = None
+    amount: Optional[float] = None
+    status: Optional[str] = None
+    user_id: Optional[int] = None
+
+# Properties to return to the client
+class SaleResponse(SaleBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
