@@ -1,7 +1,11 @@
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
+from datetime import datetime
 
-# --- Category Schemas ---
+
+# ==========================================
+# Category Schemas
+# ==========================================
 
 # Base structure for a Category
 class CategoryBase(BaseModel):
@@ -53,6 +57,37 @@ class ProductUpdate(BaseModel):
 
 class ProductResponse(ProductBase):
     id: int
+
+    class Config:
+        from_attributes = True
+
+# ==========================================
+# USER SCHEMAS
+# ==========================================
+
+# Base properties for User
+class UserBase(BaseModel):
+    first_name: str
+    last_name: Optional[str] = None
+    email_address: str
+    phone: Optional[str] = None
+
+# Properties required to create a new User (includes password)
+class UserCreate(UserBase):
+    password: str
+
+# Properties for updating a User (all fields are optional)
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email_address: Optional[str] = None
+    password: Optional[str] = None
+    phone: Optional[str] = None
+
+# Properties to return to the client (excludes password for security)
+class UserResponse(UserBase):
+    id: int
+    created_at: datetime
 
     class Config:
         from_attributes = True
