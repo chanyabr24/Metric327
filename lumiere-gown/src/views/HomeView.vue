@@ -171,12 +171,12 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import Drawer from '@/components/Drawer.vue'
+import Drawer from '../components/Drawer.vue'
+import axios from 'axios'
 
 const isDrawerOpen = ref(false)
 const categories = ['NEW', 'WOMEN', 'MEN', 'GIRLS', 'BOYS']
 
-// Carousel Logic
 const currentSlide = ref(0)
 const heroSlides = [
   { image: '/images/home1.jpg', title: 'Lumière Gown' },
@@ -194,29 +194,51 @@ const prevSlide = () => {
 
 onMounted(() => {
   timer = setInterval(nextSlide, 5000)
+  fetchData()
 })
 
 onUnmounted(() => {
   if (timer) clearInterval(timer)
 })
 
-// Mock Products Data 
-const products = ref([
-  { id: 5, name: 'Silky Silk Evening Gown', price: 12500, image_url: '/images/women.jpg', category_name: 'WOMEN' },
-  { id: 10, name: 'Elegance Lace Bridal Dress', price: 24900, image_url: '/images/newpage.jpg', category_name: 'NEW' },
-  { id: 15, name: 'Velvet Midnight Suit', price: 18900, image_url: '/images/men.jpg', category_name: 'MEN' },
-  { id: 25, name: 'Floral Princess Dress', price: 6500, image_url: '/images/girls.JPG', category_name: 'GIRLS' },
-  { id: 101, name: 'Chiffon Pleated Gown', price: 14200, image_url: '/images/girlspage.jpg', category_name: 'NEW' },
-  { id: 102, name: 'Satin Minimalist Gown', price: 16800, image_url: '/images/women.jpg', category_name: 'NEW' }
-])
+const productsList = ref([])
+const dbCategories = ref([])
 
-const featuredIds = [5, 10, 15, 25, 30, 35, 40, 45, 50, 55, 60]
+const fetchData = async () => {
+  try {
+    const catRes = await axios.get('http://127.0.0.1:8000/categories/')
+    dbCategories.value = catRes.data
+
+    const prodRes = await axios.get('http://127.0.0.1:8000/products/')
+    productsList.value = prodRes.data
+  } catch (err) {
+    console.error("Failed to fetch data for homepage:", err)
+  }
+}
+
+const shuffleArray = (array) => {
+  const newArr = [...array]
+  for (let i = newArr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[newArr[i], newArr[j]] = [newArr[j], newArr[i]]
+  }
+  return newArr
+}
 
 const featuredProducts = computed(() => {
-  return products.value.filter(p => featuredIds.includes(p.id))
+  if (productsList.value.length === 0) return []
+  const randomized = shuffleArray(productsList.value)
+  return randomized.slice(0, 4)
 })
 
 const newArrivals = computed(() => {
-  return products.value.filter(p => p.category_name?.toLowerCase() === 'new')
+  if (productsList.value.length === 0 || dbCategories.value.length === 0) return []
+  
+  const newCat = dbCategories.value.find(c => c.name.toUpperCase() === 'NEW')
+  if (!newCat) return []
+
+  const newProducts = productsList.value.filter(p => p.category_id === newCat.id)
+  const randomizedNew = shuffleArray(newProducts)
+  return randomizedNew.slice(0, 4)
 })
 </script>

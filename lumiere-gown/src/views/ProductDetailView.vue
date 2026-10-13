@@ -188,6 +188,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import axios from 'axios'
 import Drawer from '../components/Drawer.vue'
 
 const route = useRoute()
@@ -201,7 +202,6 @@ const product = ref(null)
 const selectedColor = ref('')
 const selectedSize = ref('')
 
-// Mock Color Map
 const colorMap = {
   'white': { name: 'White', hex: '#FFFFFF', border: '#e5e7eb' },
   'pearl-white': { name: 'Pearl White', hex: '#F9F6EE', border: '#e5e7eb' },
@@ -213,79 +213,44 @@ const colorMap = {
   'cream': { name: 'Cream', hex: '#FDF5E6', border: '#e5e7eb' }
 }
 
-const getColorInfo = (c) => {
-  return colorMap[c] || { name: c, hex: '#cccccc', border: 'transparent' }
-}
+const getColorInfo = (c) => colorMap[c] || { name: c, hex: '#cccccc', border: 'transparent' }
 
-// Mock dataset (ในอนาคตจะเปลี่ยนเป็นเรียก API GET `/api/products/${route.params.id}`)
-const mockProducts = [
-  { 
-    id: 1, 
-    name: 'Silky Silk Evening Gown', 
-    price: 12500, 
-    image_url: '/images/women.jpg', 
-    category_name: 'WOMEN',
-    description: 'Crafted from 100% Mulberry silk.\nFlattering cowl neckline.\nInvisible back zipper closure.\nFloor-length silhouette.'
-  },
-  { 
-    id: 2, 
-    name: 'Elegance Lace Bridal Dress', 
-    price: 24900, 
-    image_url: '/images/newpage.jpg', 
-    category_name: 'NEW',
-    description: 'Intricate French lace detailing.\nSweethart neckline with cap sleeves.\nBreathable cotton lining.'
-  },
-  { 
-    id: 3, 
-    name: 'Velvet Midnight Suit', 
-    price: 18900, 
-    image_url: '/images/men.jpg', 
-    category_name: 'MEN',
-    description: 'Premium cotton-velvet fabric.\nTailored slim fit silhouette.\nSatin lapels.'
-  }
-]
+onMounted(async () => {
+  try {
+    const productId = route.params.id
+    const res = await axios.get(`http://127.0.0.1:8000/products/${productId}`)
+    product.value = res.data
 
-onMounted(() => {
-  const productId = Number(route.params.id)
-  const found = mockProducts.find(p => p.id === productId) || mockProducts[0]
-  product.value = found
-
-  if (computedColors.value.length > 0) {
-    selectedColor.value = computedColors.value[0]
-  }
-  if (computedSizes.value.length > 0) {
-    selectedSize.value = computedSizes.value[0]
+    if (computedColors.value.length > 0) selectedColor.value = computedColors.value[0]
+    if (computedSizes.value.length > 0) selectedSize.value = computedSizes.value[0]
+  } catch (error) {
+    console.error("ไม่พบสินค้า", error)
   }
 })
 
-// Compute Colors
 const computedColors = computed(() => {
-  if (!product.value) return ['white', 'black']
-  const catName = (product.value.category_name || '').toUpperCase()
-  if (catName === 'WOMEN' || catName === 'GIRLS') {
-    return ['white', 'pearl-white']
-  }
-  return ['black', 'dark-grey', 'white']
+  if (!product.value || !product.value.attribute) return ['white', 'black']
+  try {
+    const attr = JSON.parse(product.value.attribute)
+    return attr.colors || ['white', 'black']
+  } catch { return ['white', 'black'] }
 })
 
-// Compute Sizes
 const computedSizes = computed(() => {
-  return ['xs', 's', 'm', 'l', 'xl']
+  if (!product.value || !product.value.attribute) return ['xs', 's', 'm', 'l', 'xl']
+  try {
+    const attr = JSON.parse(product.value.attribute)
+    return attr.sizes || ['xs', 's', 'm', 'l', 'xl']
+  } catch { return ['xs', 's', 'm', 'l', 'xl'] }
 })
 
-// Split Description
 const descriptionLines = computed(() => {
   if (!product.value?.description) return []
-  return product.value.description
-    .split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 0)
+  return product.value.description.split('\n').map(l => l.trim()).filter(l => l.length > 0)
 })
 
-// Add to Cart
 const handleAddToCart = () => {
   if (!product.value) return
-
   const cartItem = {
     id: `${product.value.name}-${selectedColor.value}-${selectedSize.value}`,
     name: product.value.name,
@@ -295,16 +260,12 @@ const handleAddToCart = () => {
     size: selectedSize.value,
     qty: 1
   }
-
   let cart = JSON.parse(localStorage.getItem('cart')) || []
-  const existingIndex = cart.findIndex(item => item.id === cartItem.id)
-
-  if (existingIndex !== -1) {
-    cart[existingIndex].qty += 1
-  } else {
-    cart.push(cartItem)
-  }
-
+  const existing = cart.find(i => i.id === cartItem.id)
+  
+  if (existing) existing.qty += 1
+  else cart.push(cartItem)
+  
   localStorage.setItem('cart', JSON.stringify(cart))
   router.push('/cart')
 }

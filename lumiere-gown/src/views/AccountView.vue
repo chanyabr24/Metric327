@@ -185,46 +185,49 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 import Drawer from '../components/Drawer.vue'
 
 const router = useRouter()
 const isDrawerOpen = ref(false)
 const categories = ['NEW', 'WOMEN', 'MEN', 'GIRLS', 'BOYS']
 
-// Mock User Data (ในอนาคตจะดึงผ่าน API หรือ Pinia Store)
 const user = ref({
-  first_name: 'Sophia',
-  last_name: 'Chanya',
-  full_name: 'Sophia Chanya',
-  email_address: 'sophia@example.com',
+  first_name: '',
+  last_name: '',
+  full_name: '',
+  email_address: '',
   employee_id: ''
 })
 
-// Mock Orders Data
-const orders = ref([
-  {
-    transaction_id: '100248',
-    amount: 24900,
-    status: 'COMPLETED',
-    created_at: '2026-09-15T10:30:00Z',
-    items: JSON.stringify([
-      { name: 'Elegance Lace Bridal Dress', image: '/images/newpage.jpg', price: 24900 }
-    ])
-  },
-  {
-    transaction_id: '100192',
-    amount: 18900,
-    status: 'PROCESSING',
-    created_at: '2026-10-02T14:20:00Z',
-    items: JSON.stringify([
-      { name: 'Velvet Midnight Suit', image: '/images/men.jpg', price: 18900 }
-    ])
-  }
-])
+const orders = ref([]) 
 
-// Parse JSON string or return array
+const fetchUserProfile = async () => {
+  try {
+    // 1. ดึง ID ของลูกค้าที่ล็อกอินสำเร็จจากความจำบราวเซอร์
+    const userId = localStorage.getItem('loggedInUserId')
+    
+    // 2. ดักไว้ว่าถ้าไม่มี ID (แอบเข้าหน้าโปรไฟล์โดยไม่ล็อกอิน) ให้เตะไปหน้า login
+    if (!userId) {
+      router.push('/login')
+      return
+    }
+    
+    // 3. ใช้ ID จริง ยิง API ไปขอดึงข้อมูลโปรไฟล์คนนั้นๆ
+    const response = await axios.get(`http://127.0.0.1:8000/users/${userId}`)
+    user.value = response.data
+    
+  } catch (error) {
+    console.error("ไม่สามารถดึงข้อมูลโปรไฟล์ได้:", error)
+  }
+}
+
+onMounted(() => {
+  fetchUserProfile()
+})
+
 const parseItems = (items) => {
   if (typeof items === 'string') {
     try { return JSON.parse(items) } catch (e) { return [] }
@@ -232,13 +235,11 @@ const parseItems = (items) => {
   return items || []
 }
 
-// Get First Item for Thumbnail
 const getFirstItem = (order) => {
   const items = parseItems(order.items)
   return items[0] || {}
 }
 
-// Format Date String
 const formatDate = (dateStr) => {
   if (!dateStr) return 'N/A'
   try {
@@ -252,17 +253,16 @@ const formatDate = (dateStr) => {
   }
 }
 
-// Order Status Badge styling matching Custom CSS
 const getStatusBadgeClass = (status) => {
   const s = (status || '').toUpperCase()
   if (s === 'COMPLETED') return 'bg-emerald-50 text-emerald-700'
   if (s === 'CANCELLED') return 'bg-rose-50 text-rose-700'
-  return 'bg-amber-50 text-amber-700' // PROCESSING
+  return 'bg-amber-50 text-amber-700' 
 }
 
-// Logout Action
 const handleLogout = () => {
-  // เคลียร์ Token / Session แล้ว Navigate ไปหน้าแรก
-  router.push('/')
+  // 4. ลบความจำทิ้งเมื่อกดออกจากระบบ
+  localStorage.removeItem('loggedInUserId')
+  router.push('/login')
 }
 </script>

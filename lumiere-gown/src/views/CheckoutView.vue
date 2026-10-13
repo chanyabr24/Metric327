@@ -257,72 +257,52 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 const router = useRouter()
 const isProcessing = ref(false)
 const cart = ref([])
 
 const form = ref({
-  firstName: '',
-  lastName: '',
-  email: '',
-  street: '',
-  postalCode: '',
-  city: '',
-  country: '',
+  firstName: '', lastName: '', email: '',
+  street: '', postalCode: '', city: '', country: '',
   paymentMethod: 'card'
 })
 
 onMounted(() => {
   const savedCart = localStorage.getItem('cart')
   if (savedCart) {
-    try {
-      cart.value = JSON.parse(savedCart)
-    } catch (e) {
-      cart.value = []
-    }
+    try { cart.value = JSON.parse(savedCart) } catch (e) { cart.value = [] }
   }
 })
 
-const subtotal = computed(() => {
-  return cart.value.reduce((sum, item) => sum + item.price * item.qty, 0)
-})
+const subtotal = computed(() => cart.value.reduce((sum, item) => sum + item.price * item.qty, 0))
 
 const handleConfirmPurchase = async () => {
   if (cart.value.length === 0) return
-
   isProcessing.value = true
+
   const customerName = `${form.value.firstName} ${form.value.lastName}`.trim() || 'Guest'
+  const txnId = `TXN-${Math.floor(1000 + Math.random() * 9000)}`
 
   try {
-    const res = await fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        customer_name: customerName,
-        total: subtotal.value,
-        cart: cart.value,
-        address: {
-          street: form.value.street,
-          city: form.value.city,
-          postalCode: form.value.postalCode,
-          country: form.value.country
-        }
-      })
+    // บันทึกลงตาราง Sales
+    await axios.post('http://127.0.0.1:8000/sales/', {
+      transaction_id: txnId,
+      customer_name: customerName,
+      customer_type: 'Web Customer',
+      amount: subtotal.value,
+      status: 'PROCESSING'
     })
 
-    if (res.ok) {
-      localStorage.removeItem('cart')
-      router.push('/order-complete')
-    } else {
-      const errData = await res.json().catch(() => ({}))
-      alert('Error placing order: ' + (errData.details || 'Please try again.'))
-      isProcessing.value = false
-    }
-  } catch (err) {
-    // กรณีที่ยังไม่ได้ต่อ Backend FastAPI สามารถ Mock ไปหน้า /order-complete เพื่อทดสอบ Flow ได้
+    // ล้างตะกร้า แล้วพาไปหน้า Success
     localStorage.removeItem('cart')
     router.push('/order-complete')
+
+  } catch (err) {
+    alert('Cannot place order. Please check connection.')
+    console.error(err)
+    isProcessing.value = false
   }
 }
 </script>
