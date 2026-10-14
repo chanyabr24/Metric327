@@ -107,6 +107,7 @@
             loading="lazy" 
             allowfullscreen 
             referrerpolicy="no-referrer-when-downgrade"
+            title="Lumière Gown Location Map"
           ></iframe>
           <div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400 space-y-2">
             <i class="bi bi-geo-alt text-3xl"></i>

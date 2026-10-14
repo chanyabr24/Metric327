@@ -110,7 +110,7 @@ const handleResetPassword = async () => {
 
   try {
     // นำทางไปยังหน้า verify-code พร้อมส่ง email ผ่าน Query Parameter
-    router.push({
+    await router.push({
       path: '/verify-code',
       query: { email: email.value }
     })
