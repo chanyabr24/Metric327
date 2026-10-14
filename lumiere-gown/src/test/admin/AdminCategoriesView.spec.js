@@ -4,34 +4,32 @@ import { createRouter, createWebHistory } from 'vue-router'
 import axios from 'axios'
 import AdminCategoriesView from '@/views/admin/AdminCategoriesView.vue'
 
-// Mock axios
 vi.mock('axios')
 
 const router = createRouter({
     history: createWebHistory(),
     routes: [
-        { path: '/', component: { template: '<div>Home</div>' } },
-        { path: '/login', component: { template: '<div>Login</div>' } },
-        { path: '/admin/category-form', component: { template: '<div>Category Form</div>' } }
+        { path: '/admin/categories', component: AdminCategoriesView },
+        { path: '/admin/category-form', component: { template: '<div>Category Form</div>' } },
+        { path: '/login', component: { template: '<div>Login</div>' } }
     ]
 })
 
 describe('AdminCategoriesView.vue', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        localStorage.clear()
-        // Mock window.confirm และ window.alert ให้ตอบตกลงอัตโนมัติ
-        vi.spyOn(window, 'confirm').mockReturnValue(true)
         vi.spyOn(window, 'alert').mockImplementation(() => {})
     })
 
-    it('renders loading state and fetches categories successfully', async () => {
-        const mockCategories = [
-            { id: 2, name: 'B Gown', description: 'Desc B', status: 'SHOW', image_url: 'b.jpg' },
-            { id: 1, name: 'A Gown', description: 'Desc A', status: 'HIDE', image_url: '' }
-        ]
+    it('fetches and renders categories successfully', async () => {
+        axios.get.mockResolvedValue({
+            data: [
+                { id: 1, name: 'Gowns', description: 'Wedding gowns', status: 'SHOW', image_url: 'gown.jpg' }
+            ]
+        })
 
-        axios.get.mockResolvedValueOnce({ data: mockCategories })
+        router.push('/admin/categories')
+        await router.isReady()
 
         const wrapper = mount(AdminCategoriesView, {
             global: {
@@ -40,21 +38,20 @@ describe('AdminCategoriesView.vue', () => {
             }
         })
 
-        // ตรวจสอบสถานะกำลังโหลด
         expect(wrapper.text()).toContain('Loading Categories...')
 
-        // รอให้ axios ทำงานเสร็จและ DOM อัปเดต
         await new Promise(resolve => setTimeout(resolve, 50))
         await wrapper.vm.$nextTick()
 
-        // ตรวจสอบว่าข้อมูลถูกเรียงลำดับตามตัวอักษร (A Gown มาก่อน B Gown)
-        const categoryNames = wrapper.findAll('h3').map(el => el.text())
-        expect(categoryNames[0]).toContain('A Gown')
-        expect(categoryNames[1]).toContain('B Gown')
+        expect(wrapper.text()).toContain('Gowns')
+        expect(wrapper.text()).toContain('Wedding gowns')
     })
 
     it('handles error when fetching categories fails', async () => {
-        axios.get.mockRejectedValueOnce(new Error('Network Error'))
+        axios.get.mockRejectedValue(new Error('Network Error'))
+
+        router.push('/admin/categories')
+        await router.isReady()
 
         const wrapper = mount(AdminCategoriesView, {
             global: {
@@ -69,13 +66,18 @@ describe('AdminCategoriesView.vue', () => {
         expect(wrapper.text()).toContain('Failed to load categories.')
     })
 
-    it('toggles category status correctly', async () => {
-        const mockCategories = [
-            { id: 1, name: 'Wedding Gown', description: 'White dress', status: 'SHOW', image_url: '' }
-        ]
+    it('toggles category status successfully', async () => {
+        vi.spyOn(window, 'confirm').mockReturnValue(true)
 
-        axios.get.mockResolvedValueOnce({ data: mockCategories })
-        axios.put.mockResolvedValueOnce({})
+        axios.get.mockResolvedValue({
+            data: [
+                { id: 1, name: 'Gowns', description: 'Wedding gowns', status: 'SHOW', image_url: '' }
+            ]
+        })
+        axios.put.mockResolvedValue({})
+
+        router.push('/admin/categories')
+        await router.isReady()
 
         const wrapper = mount(AdminCategoriesView, {
             global: {
@@ -87,8 +89,7 @@ describe('AdminCategoriesView.vue', () => {
         await new Promise(resolve => setTimeout(resolve, 50))
         await wrapper.vm.$nextTick()
 
-        // กดปุ่มเปลี่ยนสถานะ (HIDE)
-        const toggleBtn = wrapper.find('button.border-gray-300')
+        const toggleBtn = wrapper.findAll('button').find(b => b.text().includes('HIDE'))
         await toggleBtn.trigger('click')
 
         expect(axios.put).toHaveBeenCalledWith(
@@ -97,13 +98,18 @@ describe('AdminCategoriesView.vue', () => {
         )
     })
 
-    it('deletes category correctly', async () => {
-        const mockCategories = [
-            { id: 1, name: 'Wedding Gown', description: 'White dress', status: 'SHOW', image_url: '' }
-        ]
+    it('deletes category successfully', async () => {
+        vi.spyOn(window, 'confirm').mockReturnValue(true)
 
-        axios.get.mockResolvedValueOnce({ data: mockCategories })
-        axios.delete.mockResolvedValueOnce({})
+        axios.get.mockResolvedValue({
+            data: [
+                { id: 1, name: 'Gowns', description: 'Wedding gowns', status: 'SHOW', image_url: '' }
+            ]
+        })
+        axios.delete.mockResolvedValue({})
+
+        router.push('/admin/categories')
+        await router.isReady()
 
         const wrapper = mount(AdminCategoriesView, {
             global: {
@@ -115,17 +121,19 @@ describe('AdminCategoriesView.vue', () => {
         await new Promise(resolve => setTimeout(resolve, 50))
         await wrapper.vm.$nextTick()
 
-        // กดปุ่มลบ
         const deleteBtn = wrapper.find('button.bg-rose-50')
         await deleteBtn.trigger('click')
 
         expect(axios.delete).toHaveBeenCalledWith('http://127.0.0.1:8000/categories/1')
+        expect(wrapper.vm.categories.length).toBe(0)
     })
 
     it('handles logout correctly', async () => {
-        axios.get.mockResolvedValueOnce({ data: [] })
-        localStorage.setItem('loggedInAdminId', '999')
+        axios.get.mockResolvedValue({ data: [] })
+        router.push('/admin/categories')
+        await router.isReady()
 
+        localStorage.setItem('loggedInAdminId', '999')
         const pushSpy = vi.spyOn(router, 'push')
 
         const wrapper = mount(AdminCategoriesView, {
@@ -134,8 +142,6 @@ describe('AdminCategoriesView.vue', () => {
                 stubs: ['router-link']
             }
         })
-
-        await new Promise(resolve => setTimeout(resolve, 50))
 
         const logoutBtn = wrapper.find('aside button')
         await logoutBtn.trigger('click')

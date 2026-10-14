@@ -172,4 +172,31 @@ describe('AdminSalesView.vue', () => {
         expect(localStorage.getItem('loggedInAdminId')).toBeNull()
         expect(pushSpy).toHaveBeenCalledWith('/login')
     })
+
+    it('toggles mobile menu visibility when mobile menu button is clicked', async () => {
+        axios.get.mockResolvedValueOnce({ data: [] })
+
+        router.push('/admin/sales')
+        await router.isReady()
+
+        const wrapper = mount(AdminSalesView, {
+            global: {
+                plugins: [router],
+                stubs: ['router-link']
+            }
+        })
+
+        await new Promise(resolve => setTimeout(resolve, 50))
+        await wrapper.vm.$nextTick()
+
+        // ค่าเริ่มต้นต้องเป็น false
+        expect(wrapper.vm.isMobileMenuOpen).toBe(false)
+
+        // ค้นหาปุ่ม Toggle บนมือถือแล้วกดคลิก
+        const mobileToggleBtn = wrapper.find('button[aria-label="Toggle Navigation"]')
+        await mobileToggleBtn.trigger('click')
+
+        // ตรวจสอบว่าสถานะเปลี่ยนเป็น true
+        expect(wrapper.vm.isMobileMenuOpen).toBe(true)
+    })
 })

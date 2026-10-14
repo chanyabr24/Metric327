@@ -4,7 +4,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import axios from 'axios'
 import AdminProductsView from '@/views/admin/AdminProductsView.vue'
 
-// Mock axios
 vi.mock('axios')
 
 const router = createRouter({
@@ -19,7 +18,6 @@ const router = createRouter({
 describe('AdminProductsView.vue', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        vi.spyOn(window, 'confirm').mockReturnValue(true)
         vi.spyOn(window, 'alert').mockImplementation(() => {})
     })
 
@@ -50,7 +48,6 @@ describe('AdminProductsView.vue', () => {
 
         expect(wrapper.text()).toContain('Loading products...')
 
-        // รอให้ axios ทำงานเสร็จ
         await new Promise(resolve => setTimeout(resolve, 50))
         await wrapper.vm.$nextTick()
 
@@ -119,16 +116,16 @@ describe('AdminProductsView.vue', () => {
         await new Promise(resolve => setTimeout(resolve, 50))
         await wrapper.vm.$nextTick()
 
-        // เปลี่ยนค่าใน Dropdown เลือกหมวดหมู่ ID = 1
         const select = wrapper.find('select')
         await select.setValue(1)
 
-        // ตรวจสอบว่าสินค้าถูกกรองเหลือเฉพาะหมวดหมู่ 1
         expect(wrapper.vm.products.length).toBe(1)
         expect(wrapper.vm.products[0].name).toBe('Dress A')
     })
 
-    it('deletes product successfully', async () => {
+    it('deletes product successfully when confirmed', async () => {
+        vi.spyOn(window, 'confirm').mockReturnValue(true)
+
         axios.get.mockImplementation((url) => {
             if (url.includes('/categories/')) return Promise.resolve({ data: [] })
             if (url.includes('/products/')) return Promise.resolve({
@@ -150,11 +147,71 @@ describe('AdminProductsView.vue', () => {
         await new Promise(resolve => setTimeout(resolve, 50))
         await wrapper.vm.$nextTick()
 
-        // กดปุ่มลบสินค้า
         const deleteBtn = wrapper.find('button.bg-rose-50')
         await deleteBtn.trigger('click')
 
         expect(axios.delete).toHaveBeenCalledWith('http://127.0.0.1:8000/products/55')
+    })
+
+    it('does not delete product if confirmation is cancelled', async () => {
+        vi.spyOn(window, 'confirm').mockReturnValue(false)
+
+        axios.get.mockImplementation((url) => {
+            if (url.includes('/categories/')) return Promise.resolve({ data: [] })
+            if (url.includes('/products/')) return Promise.resolve({
+                data: [{ id: 55, name: 'Item to delete', price: 500, category_id: 1 }]
+            })
+        })
+
+        router.push('/admin/products')
+        await router.isReady()
+
+        const wrapper = mount(AdminProductsView, {
+            global: {
+                plugins: [router],
+                stubs: ['router-link']
+            }
+        })
+
+        await new Promise(resolve => setTimeout(resolve, 50))
+        await wrapper.vm.$nextTick()
+
+        const deleteBtn = wrapper.find('button.bg-rose-50')
+        await deleteBtn.trigger('click')
+
+        expect(axios.delete).not.toHaveBeenCalled()
+    })
+
+    it('handles error when deleting product fails', async () => {
+        vi.spyOn(window, 'confirm').mockReturnValue(true)
+        const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+
+        axios.get.mockImplementation((url) => {
+            if (url.includes('/categories/')) return Promise.resolve({ data: [] })
+            if (url.includes('/products/')) return Promise.resolve({
+                data: [{ id: 55, name: 'Item to delete', price: 500, category_id: 1 }]
+            })
+        })
+        axios.delete.mockRejectedValueOnce(new Error('Delete failed'))
+
+        router.push('/admin/products')
+        await router.isReady()
+
+        const wrapper = mount(AdminProductsView, {
+            global: {
+                plugins: [router],
+                stubs: ['router-link']
+            }
+        })
+
+        await new Promise(resolve => setTimeout(resolve, 50))
+        await wrapper.vm.$nextTick()
+
+        const deleteBtn = wrapper.find('button.bg-rose-50')
+        await deleteBtn.trigger('click')
+
+        await new Promise(resolve => setTimeout(resolve, 20))
+        expect(alertSpy).toHaveBeenCalled()
     })
 
     it('handles logout correctly', async () => {
