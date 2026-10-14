@@ -2,15 +2,15 @@
   <div class="min-h-screen bg-white text-gray-900 font-sans flex flex-col justify-between">
     <!-- Header / Navbar -->
     <header class="h-16 px-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-30">
-      <button 
-        @click="isDrawerOpen = true" 
-        class="text-2xl text-gray-800 hover:text-black cursor-pointer p-1"
-        aria-label="Open menu"
+      <button
+          @click="isDrawerOpen = true"
+          class="text-2xl text-gray-800 hover:text-black cursor-pointer p-1"
+          aria-label="Open menu"
       >
         <i class="bi bi-list"></i>
       </button>
 
-      <router-link to="/" class="text-xl font-serif tracking-widest  uppercase">
+      <router-link to="/" class="text-xl font-serif tracking-widest uppercase">
         LUMIÈRE GOWN
       </router-link>
 
@@ -26,11 +26,11 @@
 
     <!-- Subnav Categories -->
     <nav class="flex justify-center space-x-6 py-3 border-b border-gray-100 text-xs tracking-widest font-medium uppercase text-gray-600">
-      <router-link 
-        v-for="cat in categories" 
-        :key="cat" 
-        :to="`/${cat.toLowerCase()}`" 
-        class="hover:text-black transition-colors"
+      <router-link
+          v-for="cat in categories"
+          :key="cat"
+          :to="`/${cat.toLowerCase()}`"
+          class="hover:text-black transition-colors"
       >
         {{ cat }}
       </router-link>
@@ -40,42 +40,41 @@
     <section class="relative w-full overflow-hidden bg-gray-100">
       <div class="relative h-[60vh] md:h-[75vh] w-full">
         <!-- Carousel Slides -->
-        <div 
-          v-for="(slide, index) in heroSlides" 
-          :key="index"
-          class="absolute inset-0 transition-opacity duration-700 ease-in-out flex items-center justify-center"
-          :class="currentSlide === index ? 'opacity-100 z-10' : 'opacity-0 z-0'"
+        <div
+            v-for="(slide, index) in heroSlides"
+            :key="index"
+            class="absolute inset-0 transition-opacity duration-700 ease-in-out flex items-center justify-center"
+            :class="currentSlide === index ? 'opacity-100 z-10' : 'opacity-0 z-0'"
         >
-          <img 
-            :src="slide.image" 
-            :alt="slide.title" 
-            class="w-full h-full object-cover"
+          <img
+              :src="slide.image"
+              :alt="slide.title"
+              class="w-full h-full object-cover"
           />
-          
         </div>
 
         <!-- Carousel Indicators -->
         <div class="absolute bottom-4 left-0 right-0 z-20 flex justify-center space-x-2">
-          <button 
-            v-for="(_, index) in heroSlides" 
-            :key="index"
-            @click="currentSlide = index"
-            class="w-8 h-1 rounded-full transition-all cursor-pointer"
-            :class="currentSlide === index ? 'bg-white scale-105' : 'bg-white/50 hover:bg-white/80'"
-            :aria-label="`Slide ${index + 1}`"
+          <button
+              v-for="(_, index) in heroSlides"
+              :key="index"
+              @click="currentSlide = index"
+              class="w-8 h-1 rounded-full transition-all cursor-pointer"
+              :class="currentSlide === index ? 'bg-white scale-105' : 'bg-white/50 hover:bg-white/80'"
+              :aria-label="`Slide ${index + 1}`"
           ></button>
         </div>
 
         <!-- Controls -->
-        <button 
-          @click="prevSlide" 
-          class="absolute left-4 top-1/2 -translate-y-1/2 z-20 text-white text-2xl p-2 rounded-full bg-black/20 hover:bg-black/40 transition-colors cursor-pointer"
+        <button
+            @click="prevSlide"
+            class="absolute left-4 top-1/2 -translate-y-1/2 z-20 text-white text-2xl p-2 rounded-full bg-black/20 hover:bg-black/40 transition-colors cursor-pointer"
         >
           <i class="bi bi-chevron-left"></i>
         </button>
-        <button 
-          @click="nextSlide" 
-          class="absolute right-4 top-1/2 -translate-y-1/2 z-20 text-white text-2xl p-2 rounded-full bg-black/20 hover:bg-black/40 transition-colors cursor-pointer"
+        <button
+            @click="nextSlide"
+            class="absolute right-4 top-1/2 -translate-y-1/2 z-20 text-white text-2xl p-2 rounded-full bg-black/20 hover:bg-black/40 transition-colors cursor-pointer"
         >
           <i class="bi bi-chevron-right"></i>
         </button>
@@ -85,17 +84,17 @@
     <!-- Featured Products Section -->
     <section class="max-w-7xl mx-auto px-6 py-12 w-full">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <router-link 
-          v-for="product in featuredProducts" 
-          :key="product.id" 
-          :to="`/product/${product.id}`"
-          class="group block space-y-3"
+        <router-link
+            v-for="product in featuredProducts"
+            :key="product.id"
+            :to="`/product/${product.id}`"
+            class="group block space-y-3"
         >
           <div class="overflow-hidden bg-gray-50 rounded-sm aspect-[3/4]">
-            <img 
-              :src="product.image_url" 
-              :alt="product.name" 
-              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            <img
+                :src="product.image_url"
+                :alt="product.name"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
           </div>
           <h3 class="text-sm font-medium text-gray-800 group-hover:text-amber-700 transition-colors line-clamp-1">
@@ -110,26 +109,26 @@
     <section class="max-w-7xl mx-auto px-6 py-12 w-full border-t border-gray-100">
       <div class="flex items-center justify-between mb-8">
         <h4 class="text-xl font-serif tracking-widest text-gray-900 uppercase">NEW ARRIVALS</h4>
-        <router-link 
-          to="/new" 
-          class="text-xs font-semibold tracking-wider text-gray-500 hover:text-black uppercase border-b border-gray-400 pb-0.5"
+        <router-link
+            to="/new"
+            class="text-xs font-semibold tracking-wider text-gray-500 hover:text-black uppercase border-b border-gray-400 pb-0.5"
         >
           VIEW ALL
         </router-link>
       </div>
 
       <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <router-link 
-          v-for="product in newArrivals" 
-          :key="product.id" 
-          :to="`/product/${product.id}`"
-          class="group block space-y-3"
+        <router-link
+            v-for="product in newArrivals"
+            :key="product.id"
+            :to="`/product/${product.id}`"
+            class="group block space-y-3"
         >
           <div class="overflow-hidden bg-gray-50 rounded-sm aspect-[3/4]">
-            <img 
-              :src="product.image_url" 
-              :alt="product.name" 
-              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            <img
+                :src="product.image_url"
+                :alt="product.name"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
           </div>
           <h3 class="text-sm font-medium text-gray-800 group-hover:text-amber-700 transition-colors line-clamp-1">
@@ -142,10 +141,10 @@
 
     <!-- Editorial Section -->
     <section class="relative my-8 overflow-hidden">
-      <img 
-        src="/images/home4.jpg" 
-        alt="Bridal Sanctuary" 
-        class="w-full h-[50vh] md:h-[65vh] object-cover"
+      <img
+          src="/images/home4.jpg"
+          alt="Bridal Sanctuary"
+          class="w-full h-[50vh] md:h-[65vh] object-cover"
       />
       <div class="absolute inset-0 bg-black/25 flex flex-col items-center justify-center text-white text-center p-6">
         <p class="text-xs tracking-[0.3em] font-light uppercase mb-2">THE EDIT</p>
@@ -219,7 +218,10 @@ const fetchData = async () => {
 const shuffleArray = (array) => {
   const newArr = [...array]
   for (let i = newArr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
+    const randomBuffer = new Uint32Array(1)
+    window.crypto.getRandomValues(randomBuffer)
+    const j = randomBuffer[0] % (i + 1)
+
     ;[newArr[i], newArr[j]] = [newArr[j], newArr[i]]
   }
   return newArr
@@ -233,7 +235,7 @@ const featuredProducts = computed(() => {
 
 const newArrivals = computed(() => {
   if (productsList.value.length === 0 || dbCategories.value.length === 0) return []
-  
+
   const newCat = dbCategories.value.find(c => c.name.toUpperCase() === 'NEW')
   if (!newCat) return []
 

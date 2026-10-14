@@ -64,7 +64,9 @@ onMounted(() => {
   localStorage.removeItem('cart')
 
   // สุ่ม Transaction ID Mockup หรือดึงจาก Route Query Parameter (ถ้ามี)
-  const randomId = Math.floor(100000 + Math.random() * 900000)
+  const randomBuffer = new Uint32Array(1)
+  window.crypto.getRandomValues(randomBuffer)
+  const randomId = 100000 + (randomBuffer[0] % 900000)
   transactionId.value = randomId.toString()
 })
 </script>

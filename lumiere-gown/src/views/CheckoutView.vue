@@ -3,8 +3,8 @@
     <!-- Header -->
     <header class="border-b border-gray-100 py-4 px-6 sticky top-0 bg-white z-30">
       <div class="max-w-7xl mx-auto flex items-center justify-between">
-        <router-link 
-          to="/cart" 
+        <router-link
+          to="/cart"
           class="text-xs font-semibold tracking-wider text-gray-700 hover:text-black uppercase flex items-center space-x-2"
         >
           <i class="bi bi-arrow-left text-base"></i>
@@ -22,10 +22,10 @@
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-6 py-10 w-full flex-grow">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-        
+
         <!-- LEFT COLUMN: Forms -->
         <div class="lg:col-span-7 space-y-10">
-          
+
           <!-- SECTION 01: My Information -->
           <section class="space-y-4">
             <h2 class="text-xs font-semibold tracking-widest uppercase text-gray-800 border-b border-gray-100 pb-2">
@@ -36,10 +36,10 @@
                 <label for="firstName" class="text-[10px] font-medium tracking-widest uppercase text-gray-500">
                   First Name
                 </label>
-                <input 
+                <input
                   v-model="form.firstName"
-                  type="text" 
-                  id="firstName" 
+                  type="text"
+                  id="firstName"
                   class="w-full px-3 py-2 border border-gray-200 rounded-sm text-sm focus:outline-none focus:border-black transition-colors"
                 />
               </div>
@@ -47,10 +47,10 @@
                 <label for="lastName" class="text-[10px] font-medium tracking-widest uppercase text-gray-500">
                   Last Name
                 </label>
-                <input 
+                <input
                   v-model="form.lastName"
-                  type="text" 
-                  id="lastName" 
+                  type="text"
+                  id="lastName"
                   class="w-full px-3 py-2 border border-gray-200 rounded-sm text-sm focus:outline-none focus:border-black transition-colors"
                 />
               </div>
@@ -58,10 +58,10 @@
                 <label for="email" class="text-[10px] font-medium tracking-widest uppercase text-gray-500">
                   Email Address
                 </label>
-                <input 
+                <input
                   v-model="form.email"
-                  type="email" 
-                  id="email" 
+                  type="email"
+                  id="email"
                   class="w-full px-3 py-2 border border-gray-200 rounded-sm text-sm focus:outline-none focus:border-black transition-colors"
                 />
               </div>
@@ -78,10 +78,10 @@
                 <label for="street" class="text-[10px] font-medium tracking-widest uppercase text-gray-500">
                   Street & House Number
                 </label>
-                <input 
+                <input
                   v-model="form.street"
-                  type="text" 
-                  id="street" 
+                  type="text"
+                  id="street"
                   class="w-full px-3 py-2 border border-gray-200 rounded-sm text-sm focus:outline-none focus:border-black transition-colors"
                 />
               </div>
@@ -89,10 +89,10 @@
                 <label for="postalCode" class="text-[10px] font-medium tracking-widest uppercase text-gray-500">
                   Postal Code
                 </label>
-                <input 
+                <input
                   v-model="form.postalCode"
-                  type="text" 
-                  id="postalCode" 
+                  type="text"
+                  id="postalCode"
                   class="w-full px-3 py-2 border border-gray-200 rounded-sm text-sm focus:outline-none focus:border-black transition-colors"
                 />
               </div>
@@ -100,10 +100,10 @@
                 <label for="city" class="text-[10px] font-medium tracking-widest uppercase text-gray-500">
                   City
                 </label>
-                <input 
+                <input
                   v-model="form.city"
-                  type="text" 
-                  id="city" 
+                  type="text"
+                  id="city"
                   class="w-full px-3 py-2 border border-gray-200 rounded-sm text-sm focus:outline-none focus:border-black transition-colors"
                 />
               </div>
@@ -111,10 +111,10 @@
                 <label for="country" class="text-[10px] font-medium tracking-widest uppercase text-gray-500">
                   Country
                 </label>
-                <input 
+                <input
                   v-model="form.country"
-                  type="text" 
-                  id="country" 
+                  type="text"
+                  id="country"
                   class="w-full px-3 py-2 border border-gray-200 rounded-sm text-sm focus:outline-none focus:border-black transition-colors"
                 />
               </div>
@@ -127,15 +127,15 @@
               03 / Payment
             </h2>
             <div class="space-y-3">
-              <label 
+              <label
                 class="flex items-center justify-between p-4 border rounded-sm cursor-pointer transition-colors"
                 :class="form.paymentMethod === 'card' ? 'border-black bg-gray-50' : 'border-gray-200'"
               >
                 <div class="flex items-center space-x-3">
-                  <input 
+                  <input
                     v-model="form.paymentMethod"
-                    type="radio" 
-                    value="card" 
+                    type="radio"
+                    value="card"
                     class="accent-black"
                   />
                   <span class="text-sm font-medium text-gray-800">Credit Card</span>
@@ -146,15 +146,15 @@
                 </div>
               </label>
 
-              <label 
+              <label
                 class="flex items-center justify-between p-4 border rounded-sm cursor-pointer transition-colors"
                 :class="form.paymentMethod === 'paypal' ? 'border-black bg-gray-50' : 'border-gray-200'"
               >
                 <div class="flex items-center space-x-3">
-                  <input 
+                  <input
                     v-model="form.paymentMethod"
-                    type="radio" 
-                    value="paypal" 
+                    type="radio"
+                    value="paypal"
                     class="accent-black"
                   />
                   <span class="text-sm font-medium text-gray-800">PayPal</span>
@@ -178,15 +178,15 @@
             <!-- Items -->
             <div class="space-y-4 max-h-80 overflow-y-auto divide-y divide-gray-100 pr-1">
               <template v-if="cart.length > 0">
-                <div 
-                  v-for="item in cart" 
-                  :key="item.id" 
+                <div
+                  v-for="item in cart"
+                  :key="item.id"
                   class="flex space-x-4 pt-4 first:pt-0"
                 >
                   <div class="w-16 h-20 bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-100 rounded-sm">
-                    <img 
-                      :src="item.image" 
-                      :alt="item.name" 
+                    <img
+                      :src="item.image"
+                      :alt="item.name"
                       class="w-full h-full object-cover"
                       @error="$event.target.src = '/images/women.jpg'"
                     />
@@ -228,8 +228,8 @@
             </div>
 
             <!-- Submit Button -->
-            <button 
-              @click="handleConfirmPurchase" 
+            <button
+              @click="handleConfirmPurchase"
               :disabled="isProcessing || cart.length === 0"
               class="w-full py-3 bg-black text-white text-xs font-semibold tracking-widest uppercase hover:bg-amber-700 transition-colors disabled:opacity-50 cursor-pointer"
             >
@@ -283,7 +283,11 @@ const handleConfirmPurchase = async () => {
   isProcessing.value = true
 
   const customerName = `${form.value.firstName} ${form.value.lastName}`.trim() || 'Guest'
-  const txnId = `TXN-${Math.floor(1000 + Math.random() * 9000)}`
+
+  // แก้ไขวิธีสุ่มด้วย crypto.getRandomValues ให้ถูกต้อง
+  const randomBuffer = new Uint32Array(1)
+  window.crypto.getRandomValues(randomBuffer)
+  const txnId = `TXN-${1000 + (randomBuffer[0] % 9000)}`
 
   try {
     // บันทึกลงตาราง Sales
