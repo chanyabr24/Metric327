@@ -386,19 +386,17 @@ const handleImageError = (e) => {
 const handleSubmit = async () => {
   isSubmitting.value = true
 
-  // 📍 1. สร้างเป็น Object ตรงๆ (ลบ JSON.stringify ออก)
   const finalAttribute = {
     colors: selectedColors.value,
     sizes: selectedSizes.value
   }
 
-  // 📍 2. รวมข้อมูลเพื่อเตรียมส่ง
   const payload = {
     name: form.value.name,
     description: form.value.description,
-    price: Number(form.value.price), 
-    category_id: Number(form.value.category_id), 
-    attribute: finalAttribute, // ส่งแบบ Object
+    price: Number(form.value.price),
+    category_id: Number(form.value.category_id),
+    attribute: finalAttribute,
     image_url: form.value.image_url
   }
 
@@ -410,7 +408,7 @@ const handleSubmit = async () => {
     }
 
     alert('Product saved successfully!')
-    router.push('/admin/products') 
+    router.push('/admin/products')
 
   } catch (err) {
     console.error("Error saving product:", err)
